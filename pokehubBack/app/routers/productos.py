@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.models.categoria import Categoria
 from app.models.producto import Producto
-from app.schemas.producto import ProductoCreate, ProductoResponse
+from app.schemas.producto import ProductoCreate, ProductoUpdate, ProductoResponse
 
 router = APIRouter(prefix="/productos", tags=["productos"])
 
@@ -44,3 +44,28 @@ def create_producto(data: ProductoCreate, db: Session = Depends(get_db)):
     db.refresh(new_producto)
 
     return new_producto
+
+
+@router.patch("/{producto_id}", response_model=ProductoResponse)
+def update_producto(producto_id: int, data: ProductoUpdate, db: Session = Depends(get_db)):
+    producto = db.query(Producto).filter(Producto.id == producto_id).first()
+    if not producto:
+        raise HTTPException(status_code=404, detail="Producto no encontrado")
+    if data.nombre      is not None: producto.nombre      = data.nombre.strip()
+    if data.descripcion is not None: producto.descripcion = data.descripcion.strip()
+    if data.precio      is not None:
+        if data.precio < 0:
+            raise HTTPException(status_code=400, detail="El precio no puede ser negativo")
+        producto.precio = data.precio
+    db.commit()
+    db.refresh(producto)
+    return producto
+
+
+@router.delete("/{producto_id}", status_code=204)
+def delete_producto(producto_id: int, db: Session = Depends(get_db)):
+    producto = db.query(Producto).filter(Producto.id == producto_id).first()
+    if not producto:
+        raise HTTPException(status_code=404, detail="Producto no encontrado")
+    db.delete(producto)
+    db.commit()

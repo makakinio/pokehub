@@ -12,6 +12,11 @@ class ProductoBase(BaseModel):
 class ProductoCreate(ProductoBase):
     pass
 
+class ProductoUpdate(BaseModel):
+    nombre:      Optional[str]     = None
+    descripcion: Optional[str]     = None
+    precio:      Optional[Decimal] = None
+
 class ProductoResponse(ProductoBase):
     id: int
 

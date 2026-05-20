@@ -4,7 +4,7 @@ from pydantic import BaseModel
 class PedidoTiendaBase(BaseModel):
     id_usuario: int
     total: Decimal
-    estado: str
+    estado: str = "completado"
 
 class PedidoTiendaCreate(PedidoTiendaBase):
     pass

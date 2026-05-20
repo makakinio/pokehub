@@ -17,6 +17,7 @@ from app.routers import (
     pedidos_tienda,
     detalle_pedido,
     config_usuarios,
+    chat,
 )
 
 
@@ -53,6 +54,8 @@ app.include_router(inventario_usuario.router)
 app.include_router(pedidos_tienda.router)
 app.include_router(detalle_pedido.router)
 app.include_router(config_usuarios.router)
+app.include_router(chat.router)
+
 
 @app.get("/")
 def root():

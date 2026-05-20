@@ -3,46 +3,23 @@ import { useState } from "react";
 import { AuthContext } from "./auth-context";
 
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(localStorage.getItem("token") ?? null);
-  const [user, setUser] = useState(
-    JSON.parse(localStorage.getItem("user") ?? "null")
-  );
+  // Solo el token se persiste en localStorage.
+  // El objeto usuario NO se guarda nunca en localStorage por seguridad;
+  // se obtiene en tiempo real con authApi.getUsuarioActual() cuando se necesita.
+  const [token, setToken] = useState(localStorage.getItem("access_token") ?? null);
 
-  function login(accessToken, userData = null) {
+  function login(accessToken) {
     setToken(accessToken);
-    setUser(userData);
-    localStorage.setItem("token", accessToken);
-    localStorage.setItem("user", JSON.stringify(userData));
+    localStorage.setItem("access_token", accessToken);
   }
 
   function logout() {
     setToken(null);
-    setUser(null);
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-  }
-
-  async function authFetch(url, options = {}) {
-    const headers = {
-      ...options.headers,
-      Authorization: `Bearer ${token}`,
-    };
-
-    const res = await fetch(url, {
-      ...options,
-      headers,
-    });
-
-    if (res.status === 401) {
-      logout();
-      return null;
-    }
-
-    return res;
+    localStorage.removeItem("access_token");
   }
 
   return (
-    <AuthContext.Provider value={{ token, user, login, logout, authFetch }}>
+    <AuthContext.Provider value={{ token, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

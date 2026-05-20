@@ -7,6 +7,7 @@ from app.models.producto import Producto
 from app.models.inventario_usuario import InventarioUsuario
 from app.schemas.inventario_usuario import (
     InventarioUsuarioCreate,
+    InventarioUsuarioUpdate,
     InventarioUsuarioResponse,
 )
 
@@ -49,3 +50,24 @@ def create_inventario_item(data: InventarioUsuarioCreate, db: Session = Depends(
     db.refresh(new_item)
 
     return new_item
+
+
+@router.patch("/{user_id}/{product_id}", response_model=InventarioUsuarioResponse)
+def update_cantidad(
+    user_id: int,
+    product_id: int,
+    data: InventarioUsuarioUpdate,
+    db: Session = Depends(get_db),
+):
+    item = db.query(InventarioUsuario).filter(
+        InventarioUsuario.id_usuario == user_id,
+        InventarioUsuario.id_producto == product_id,
+    ).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Item no encontrado en inventario")
+    if data.cantidad < 0:
+        raise HTTPException(status_code=400, detail="La cantidad no puede ser negativa")
+    item.cantidad = data.cantidad
+    db.commit()
+    db.refresh(item)
+    return item

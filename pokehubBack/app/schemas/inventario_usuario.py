@@ -8,6 +8,9 @@ class InventarioUsuarioBase(BaseModel):
 class InventarioUsuarioCreate(InventarioUsuarioBase):
     pass
 
+class InventarioUsuarioUpdate(BaseModel):
+    cantidad: int
+
 class InventarioUsuarioResponse(InventarioUsuarioBase):
     class Config:
         from_attributes = True

@@ -1,0 +1,174 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+@import "tailwindcss";
+
+/* Global font override — dentro de @layer base para que las utilities de Tailwind
+   (py-*, px-*, gap-*, mb-*, etc.) puedan sobreescribirlas correctamente.
+   Sin esto, el bloque * fuera de capa gana sobre CUALQUIER @layer utilities. */
+@layer base {
+  *, *::before, *::after {
+    font-family: 'Press Start 2P', cursive;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+html, body {
+  width: 100%;
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Background (used on .fondo in App.jsx) */
+.fondo {
+  background-image: url("./assets/img/fondo.gif");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Keyframes ── */
+@keyframes pokeSpin  { to { transform: rotate(360deg); } }
+@keyframes pokeBounce {
+  0%,100% { transform: scale(1); }
+  30%     { transform: scale(1.18); }
+  60%     { transform: scale(0.93); }
+}
+@keyframes pkFloat {
+  0%,100% { transform: translateY(0); }
+  50%     { transform: translateY(-6px); }
+}
+@keyframes skelShimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+@keyframes pkCardIn {
+  from { opacity:0; transform: translateY(20px) scale(0.97); }
+  to   { opacity:1; transform: none; }
+}
+@keyframes pkSlideIn {
+  from { opacity:0; transform: translateX(16px); }
+  to   { opacity:1; transform: none; }
+}
+@keyframes pkFadeIn {
+  from { opacity:0; transform: translateY(-6px); }
+  to   { opacity:1; transform: none; }
+}
+@keyframes pkSpin { to { transform: rotate(360deg); } }
+@keyframes pkShake {
+  0%,100% { transform: rotate(0deg) scale(1); }
+  15%     { transform: rotate(-12deg) scale(1.06); }
+  30%     { transform: rotate(12deg) scale(1.06); }
+  45%     { transform: rotate(-10deg) scale(1.04); }
+  60%     { transform: rotate(10deg) scale(1.04); }
+  75%     { transform: rotate(-6deg) scale(1.02); }
+  90%     { transform: rotate(6deg) scale(1.02); }
+}
+@keyframes pkFlash {
+  0%   { opacity: 0; }
+  30%  { opacity: 1; }
+  70%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes pkRevealPokemon {
+  from { opacity:0; transform: scale(0.6) translateY(20px); }
+  to   { opacity:1; transform: scale(1) translateY(0); }
+}
+@keyframes pkCoinPop {
+  0%   { opacity:1; transform: translateY(0) scale(1); }
+  100% { opacity:0; transform: translateY(-60px) scale(1.3); }
+}
+@keyframes pkModalOverlay {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes pkModalCard {
+  0%   { opacity: 0; transform: scale(0.6) translateY(40px); }
+  65%  { opacity: 1; transform: scale(1.04) translateY(-6px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes pkModalGlow {
+  0%,100% { opacity: 0.5; }
+  50%      { opacity: 1;   }
+}
+@keyframes pkPulse {
+  0%,100% { transform: scale(1); }
+  50%     { transform: scale(1.08); }
+}
+
+/* ── Named animation classes (can't be done purely in Tailwind) ── */
+.pk-pokeball-spinning  { animation: pokeSpin 0.8s linear; }
+.pk-pokeball-bounce    { animation: pokeBounce 0.4s ease; }
+.pk-float              { animation: pkFloat 3s ease-in-out infinite; will-change: transform; }
+.pk-card-in            { animation: pkCardIn  0.4s  cubic-bezier(0.16,1,0.3,1) both; }
+.pk-slide-in           { animation: pkSlideIn 0.25s cubic-bezier(0.16,1,0.3,1) both; }
+.pk-fade-in            { animation: pkFadeIn  0.25s ease both; }
+.pk-logo-ball          { animation: pkFloat 3s ease-in-out infinite; }
+.pk-shake              { animation: pkShake 0.9s ease both; }
+.pk-flash              { animation: pkFlash 0.6s ease both; }
+.pk-reveal-pokemon     { animation: pkRevealPokemon 0.5s cubic-bezier(0.16,1,0.3,1) both; }
+.pk-modal-overlay      { animation: pkModalOverlay 0.25s ease both; }
+.pk-modal-card         { animation: pkModalCard 0.55s cubic-bezier(0.16,1,0.3,1) both; }
+.pk-modal-glow         { animation: pkModalGlow 2s ease-in-out infinite; }
+.pk-coin-pop           { animation: pkCoinPop 0.8s ease both; pointer-events: none; }
+.pk-pulse              { animation: pkPulse 1.8s ease-in-out infinite; }
+
+/* Skeleton shimmer */
+.skel {
+  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+  background-size: 200% 100%;
+  animation: skelShimmer 1.4s infinite;
+  border-radius: 0.35rem;
+}
+
+/* Spinner */
+.pk-spinner {
+  display: inline-block;
+  width: 13px; height: 13px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: pkSpin 0.7s linear infinite;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+/* Image rendering */
+.image-pixelated { image-rendering: pixelated; }
+
+/* Pokedex progress bar gradient (can't do in Tailwind easily) */
+.pokedex-barra-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #e3000b, #ffcb05);
+  border-radius: 9999px;
+  transition: width 1.2s cubic-bezier(0.16,1,0.3,1);
+}
+
+/* Active tab indicator */
+.pk-tab-active {
+  color: #cc0000;
+}
+.pk-tab-active::after {
+  content: '';
+  position: absolute;
+  bottom: -3px; left: 0; right: 0;
+  height: 3px;
+  background: #cc0000;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pk-float, .skel, .pk-spinner, .pk-logo-ball,
+  .pk-card-in, .pk-slide-in, .pk-fade-in { animation: none; }
+  .pokedex-barra-fill { transition: none; }
+}

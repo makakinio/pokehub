@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 29-04-2026 a las 16:13:58
+-- Tiempo de generación: 20-05-2026 a las 23:19:53
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -51,10 +51,17 @@ INSERT INTO `categoria` (`id`, `nombre`, `descripcion`) VALUES
 CREATE TABLE `config_usuarios` (
   `id_usuario` int(11) NOT NULL,
   `idioma` varchar(50) NOT NULL DEFAULT 'esp',
-  `tema` varchar(50) NOT NULL,
   `musica` tinyint(1) NOT NULL DEFAULT 1,
   `sonido` tinyint(1) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `config_usuarios`
+--
+
+INSERT INTO `config_usuarios` (`id_usuario`, `idioma`, `musica`, `sonido`) VALUES
+(7, 'esp', 1, 1),
+(8, 'esp', 1, 0);
 
 -- --------------------------------------------------------
 
@@ -67,6 +74,21 @@ CREATE TABLE `detalle_pedido` (
   `id_producto` int(11) NOT NULL,
   `cantidad` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `detalle_pedido`
+--
+
+INSERT INTO `detalle_pedido` (`id_pedido`, `id_producto`, `cantidad`) VALUES
+(1, 21, 1),
+(2, 21, 1),
+(3, 21, 1),
+(4, 21, 1),
+(5, 21, 1),
+(6, 21, 1),
+(7, 21, 1),
+(8, 21, 1),
+(9, 21, 4);
 
 -- --------------------------------------------------------
 
@@ -87,6 +109,14 @@ CREATE TABLE `equipos` (
   `id_pokemon_usuario_06` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Volcado de datos para la tabla `equipos`
+--
+
+INSERT INTO `equipos` (`id`, `id_usuario`, `nombre`, `fecha_creacion`, `id_pokemon_usuario_01`, `id_pokemon_usuario_02`, `id_pokemon_usuario_03`, `id_pokemon_usuario_04`, `id_pokemon_usuario_05`, `id_pokemon_usuario_06`) VALUES
+(1, 7, 'Equipo 1', '2026-05-19', 2, 3, 4, 5, 6, 7),
+(2, 7, 'ee', '2026-05-19', 3, 7, 11, 15, 12, 13);
+
 -- --------------------------------------------------------
 
 --
@@ -98,6 +128,36 @@ CREATE TABLE `inventario_usuario` (
   `id_producto` int(11) NOT NULL,
   `cantidad` int(11) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `inventario_usuario`
+--
+
+INSERT INTO `inventario_usuario` (`id_usuario`, `id_producto`, `cantidad`) VALUES
+(7, 21, 6),
+(8, 13, 1),
+(8, 21, 3);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `mensajes_chat`
+--
+
+CREATE TABLE `mensajes_chat` (
+  `id` int(11) NOT NULL,
+  `id_usuario` int(11) NOT NULL,
+  `mensaje` text NOT NULL,
+  `fecha` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `mensajes_chat`
+--
+
+INSERT INTO `mensajes_chat` (`id`, `id_usuario`, `mensaje`, `fecha`) VALUES
+(1, 8, 'hola', '2026-05-20 23:12:57'),
+(2, 7, 'eyyy', '2026-05-20 23:13:12');
 
 -- --------------------------------------------------------
 
@@ -316,6 +376,21 @@ CREATE TABLE `pedidos_tienda` (
   `total` decimal(10,2) NOT NULL,
   `estado` varchar(50) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `pedidos_tienda`
+--
+
+INSERT INTO `pedidos_tienda` (`id`, `id_usuario`, `total`, `estado`) VALUES
+(1, 7, 3.00, 'completado'),
+(2, 7, 3.00, 'completado'),
+(3, 7, 3.00, 'completado'),
+(4, 7, 3.00, 'completado'),
+(5, 7, 3.00, 'completado'),
+(6, 7, 3.00, 'completado'),
+(7, 7, 3.00, 'completado'),
+(8, 7, 3.00, 'completado'),
+(9, 8, 12.00, 'completado');
 
 -- --------------------------------------------------------
 
@@ -3534,6 +3609,46 @@ CREATE TABLE `pokemon_usuarios` (
   `shiny` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Volcado de datos para la tabla `pokemon_usuarios`
+--
+
+INSERT INTO `pokemon_usuarios` (`id`, `id_usuario`, `id_pokemon`, `apodo`, `nivel`, `experiencia`, `hp`, `ataque`, `defensa`, `ataque_especial`, `defensa_especial`, `velocidad`, `shiny`) VALUES
+(2, 7, 2, NULL, 1, 0, 60, 62, 63, 80, 80, 60, 1),
+(3, 7, 6, NULL, 1, 0, 78, 84, 78, 109, 85, 100, 0),
+(4, 7, 11, NULL, 1, 0, 50, 20, 55, 25, 25, 30, 0),
+(5, 7, 10, NULL, 1, 0, 45, 30, 35, 20, 20, 45, 1),
+(6, 7, 30, NULL, 1, 0, 70, 62, 67, 55, 55, 56, 1),
+(7, 7, 69, NULL, 1, 0, 50, 75, 35, 70, 30, 40, 0),
+(8, 7, 19, NULL, 1, 0, 30, 56, 35, 25, 35, 72, 0),
+(9, 7, 98, NULL, 1, 0, 30, 105, 90, 25, 25, 50, 0),
+(10, 7, 48, NULL, 1, 0, 60, 55, 50, 40, 55, 45, 0),
+(11, 7, 129, NULL, 1, 0, 20, 10, 55, 15, 20, 80, 0),
+(12, 7, 66, NULL, 1, 0, 70, 80, 50, 35, 35, 35, 0),
+(13, 7, 100, NULL, 1, 0, 40, 30, 50, 55, 55, 100, 0),
+(14, 7, 102, NULL, 1, 0, 60, 40, 80, 60, 45, 40, 0),
+(15, 7, 108, NULL, 1, 0, 90, 55, 75, 60, 75, 30, 0),
+(16, 7, 97, NULL, 1, 0, 85, 73, 70, 73, 115, 67, 0),
+(17, 7, 90, NULL, 1, 0, 30, 65, 100, 45, 25, 40, 0),
+(18, 7, 132, NULL, 1, 0, 48, 48, 48, 48, 48, 48, 0),
+(19, 7, 151, NULL, 1, 0, 100, 100, 100, 100, 100, 100, 0),
+(20, 7, 46, NULL, 1, 0, 35, 70, 55, 45, 55, 25, 0),
+(21, 7, 50, NULL, 1, 0, 10, 55, 25, 35, 45, 95, 0),
+(22, 7, 32, NULL, 1, 0, 46, 57, 40, 40, 40, 50, 0),
+(23, 7, 76, NULL, 1, 0, 80, 120, 130, 55, 65, 45, 0),
+(24, 7, 13, NULL, 1, 0, 40, 35, 30, 20, 20, 50, 0),
+(25, 8, 15, NULL, 1, 0, 65, 90, 40, 45, 80, 75, 0),
+(26, 8, 39, NULL, 1, 0, 115, 45, 20, 45, 25, 20, 0),
+(27, 8, 107, NULL, 1, 0, 50, 105, 79, 35, 110, 76, 0),
+(28, 8, 23, NULL, 1, 0, 35, 60, 44, 40, 54, 55, 0),
+(29, 8, 116, NULL, 1, 0, 30, 40, 70, 70, 25, 60, 0),
+(30, 8, 86, NULL, 1, 0, 65, 45, 55, 45, 70, 45, 0),
+(31, 8, 37, NULL, 1, 0, 38, 41, 40, 50, 65, 65, 0),
+(32, 8, 63, NULL, 1, 0, 25, 20, 15, 105, 55, 90, 0),
+(33, 8, 19, NULL, 1, 0, 30, 56, 35, 25, 35, 72, 0),
+(34, 8, 77, NULL, 1, 0, 50, 85, 55, 65, 65, 90, 0),
+(35, 8, 96, NULL, 1, 0, 60, 48, 45, 43, 90, 42, 0);
+
 -- --------------------------------------------------------
 
 --
@@ -3554,26 +3669,14 @@ CREATE TABLE `productos` (
 --
 
 INSERT INTO `productos` (`id`, `id_categoria`, `nombre`, `descripcion`, `precio`, `imagen`) VALUES
-(1, 1, 'Pocion', 'Restaura PS de un pokemon', 100.00, '/media/imagenes/productos/pocion.png'),
-(2, 1, 'Superpocion', 'Restaura una cantidad mayor de PS', 300.00, '/media/imagenes/productos/superpocion.png'),
-(3, 1, 'Hiperpocion', 'Restaura muchos PS de un pokemon', 700.00, '/media/imagenes/productos/hiperpocion.png'),
-(4, 1, 'Revivir', 'Revive a un pokemon debilitado', 800.00, '/media/imagenes/productos/revivir.png'),
-(5, 1, 'Max Revivir', 'Revive un pokemon y restaura todos sus PS', 2000.00, '/media/imagenes/productos/max_revivir.png'),
-(6, 1, 'Antidoto', 'Cura el estado de envenenamiento', 80.00, '/media/imagenes/productos/antidoto.png'),
-(7, 1, 'Antiparalizador', 'Cura la paralisis', 90.00, '/media/imagenes/productos/antiparalizador.png'),
-(8, 1, 'Despertar', 'Despierta a un pokemon dormido', 80.00, '/media/imagenes/productos/despertar.png'),
-(9, 1, 'Cura Total', 'Elimina cualquier cambio de estado', 400.00, '/media/imagenes/productos/cura_total.png'),
-(10, 1, 'Ataque X', 'Aumenta el ataque durante el combate', 500.00, '/media/imagenes/productos/ataque_x.png'),
-(11, 1, 'Defensa X', 'Aumenta la defensa durante el combate', 500.00, '/media/imagenes/productos/defensa_x.png'),
-(12, 1, 'Velocidad X', 'Aumenta la velocidad durante el combate', 500.00, '/media/imagenes/productos/velocidad_x.png'),
-(13, 2, 'Amuleto de Suerte', 'Aumenta la probabilidad de obtener pokemon raros', 1200.00, '/media/imagenes/productos/amuleto_suerte.png'),
-(14, 2, 'Encanto Shiny', 'Aumenta la probabilidad de generar un pokemon shiny', 2500.00, '/media/imagenes/productos/encanto_shiny.png'),
-(15, 2, 'Token de IV', 'Mejora la calidad minima del pokemon generado', 1800.00, '/media/imagenes/productos/token_iv.png'),
-(16, 2, 'Charm Raro', 'Incrementa la aparicion de pokemon de rareza alta', 1500.00, '/media/imagenes/productos/charm_raro.png'),
-(17, 2, 'Charm Epico', 'Incrementa la probabilidad de pokemon epicos', 2200.00, '/media/imagenes/productos/charm_epico.png'),
-(18, 2, 'Charm Legendario', 'Sube ligeramente la probabilidad de legendarios', 5000.00, '/media/imagenes/productos/charm_legendario.png'),
-(19, 2, 'Moneda Fortuna', 'Aumenta las monedas obtenidas al jugar', 1000.00, '/media/imagenes/productos/moneda_fortuna.png'),
-(20, 2, 'Ticket de Invocacion', 'Permite una generacion especial de pokemon', 2000.00, '/media/imagenes/productos/ticket_invocacion.png');
+(13, 2, 'Amuleto de Suerte', 'Aumenta la probabilidad de obtener pokemon raros permamentemente', 5000.00, '/media/imagenes/productos/amuleto_suerte.png'),
+(15, 2, 'Token de IV', 'Mejora la calidad minima del pokemon generado durante 3 tiradas', 800.00, '/media/imagenes/productos/token_iv.png'),
+(16, 2, 'Charm Raro', 'Incrementa la aparicion de pokemons raros durante 5 rondas', 500.00, '/media/imagenes/productos/charm_raro.png'),
+(17, 2, 'Charm Epico', 'Incrementa la probabilidad de pokemon epicos durante 5 rondas', 900.00, '/media/imagenes/productos/charm_epico.png'),
+(18, 2, 'Charm Legendario', 'Sube ligeramente la probabilidad de legendarios durante 5 rondas', 1500.00, '/media/imagenes/productos/charm_legendario.png'),
+(19, 2, 'Moneda Fortuna', 'Aumenta las monedas obtenidas al jugar en un x1,5', 1000.00, '/media/imagenes/productos/moneda_fortuna.png'),
+(20, 2, 'Ticket de Invocacion', 'Invoca un pokemon legendario o mitico aleatorio', 10000.00, '/media/imagenes/productos/ticket_invocacion.png'),
+(21, 3, 'Pokeball', 'Se utiliza para poder capturar pokemons', 3.00, NULL);
 
 -- --------------------------------------------------------
 
@@ -3587,18 +3690,19 @@ CREATE TABLE `usuarios` (
   `email` varchar(255) NOT NULL,
   `clave` varchar(255) NOT NULL,
   `avatar` varchar(255) DEFAULT NULL,
-  `rol` varchar(50) NOT NULL,
+  `admin` tinyint(1) NOT NULL,
   `dinero` decimal(10,2) NOT NULL DEFAULT 0.00,
-  `estado` varchar(50) NOT NULL
+  `estado` varchar(50) NOT NULL,
+  `verificado` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `usuarios`
 --
 
-INSERT INTO `usuarios` (`id`, `nombre`, `email`, `clave`, `avatar`, `rol`, `dinero`, `estado`) VALUES
-(4, 'string', 'user@example.com', '$argon2id$v=19$m=65536,t=3,p=4$NJ0mCA0aksn/+Aoxebxjqg$Vdo7SJ0nblovR3rkrrAy+VtzDN3XI4KYMzaiUktPxyI', 'string', 'string', 0.00, 'string'),
-(5, 'prueba', 'prueba@gmail.com', '$argon2id$v=19$m=65536,t=3,p=4$+G8YTCxJYOYTogqlTErehA$ex8SYGv6U/jWWI59AOXPZBNNqdhKiVQJkdnlzYX1RX4', NULL, 'usuario', 0.00, 'activo');
+INSERT INTO `usuarios` (`id`, `nombre`, `email`, `clave`, `avatar`, `admin`, `dinero`, `estado`, `verificado`) VALUES
+(7, 'chang', 'changc.ye1605@gmail.com', '$argon2id$v=19$m=65536,t=3,p=4$SHTQAAye3nPNkMhMRBgLkA$K8gfMIL8z/YYhL064QmDgm4EkYsoM8OzgzLVWxQ95EI', NULL, 0, 38.70, 'activo', 0),
+(8, 'admin', 'admin@gmail.com', '$argon2id$v=19$m=65536,t=3,p=4$h0XNEdb5+otHcbUM5BYtLQ$9fVABMm4tNCqNKQYgLnyzHDdOybmGTBH063fytsXxpk', NULL, 1, 2.80, 'activo', 1);
 
 --
 -- Índices para tablas volcadas
@@ -3642,6 +3746,13 @@ ALTER TABLE `equipos`
 ALTER TABLE `inventario_usuario`
   ADD PRIMARY KEY (`id_usuario`,`id_producto`),
   ADD KEY `fk_inventario_usuario_producto` (`id_producto`);
+
+--
+-- Indices de la tabla `mensajes_chat`
+--
+ALTER TABLE `mensajes_chat`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_usuario` (`id_usuario`);
 
 --
 -- Indices de la tabla `movimientos`
@@ -3715,7 +3826,13 @@ ALTER TABLE `categoria`
 -- AUTO_INCREMENT de la tabla `equipos`
 --
 ALTER TABLE `equipos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT de la tabla `mensajes_chat`
+--
+ALTER TABLE `mensajes_chat`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de la tabla `movimientos`
@@ -3727,7 +3844,7 @@ ALTER TABLE `movimientos`
 -- AUTO_INCREMENT de la tabla `pedidos_tienda`
 --
 ALTER TABLE `pedidos_tienda`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT de la tabla `pokemon`
@@ -3739,19 +3856,19 @@ ALTER TABLE `pokemon`
 -- AUTO_INCREMENT de la tabla `pokemon_usuarios`
 --
 ALTER TABLE `pokemon_usuarios`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
 
 --
 -- AUTO_INCREMENT de la tabla `productos`
 --
 ALTER TABLE `productos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT de la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- Restricciones para tablas volcadas
@@ -3788,6 +3905,12 @@ ALTER TABLE `equipos`
 ALTER TABLE `inventario_usuario`
   ADD CONSTRAINT `fk_inventario_usuario_producto` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_inventario_usuario_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Filtros para la tabla `mensajes_chat`
+--
+ALTER TABLE `mensajes_chat`
+  ADD CONSTRAINT `mensajes_chat_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE;
 
 --
 -- Filtros para la tabla `movimientos_pokemon_usuario`

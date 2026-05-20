@@ -6,6 +6,5 @@ class ConfigUsuario(Base):
 
     id_usuario = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE", onupdate="CASCADE"), primary_key=True)
     idioma = Column(String(50), nullable=False, default="esp")
-    tema = Column(String(50), nullable=False)
     musica = Column(Boolean, nullable=False, default=True)
     sonido = Column(Boolean, nullable=False, default=True)
