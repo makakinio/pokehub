@@ -5,6 +5,7 @@ import { authApi, usersApi } from "../api/api.js";
 import { usePageMusic } from "../hooks/usePageMusic.js";
 import loginMusic from "../assets/audio/temas/login.mp3";
 
+
 // --- Utilidades de seguridad ---
 function sanitize(str) {
   return String(str)
@@ -115,7 +116,7 @@ const inputCls = "w-full py-4 pl-5 pr-12 border-2 border-[#e0e0e0] rounded-xl te
 const labelCls = "block text-[0.68rem] tracking-[0.09em] text-[#444] mb-2 leading-[1.6]";
 
 // --- Panel de Login ---
-function LoginPanel({ onSwitch }) {
+function LoginPanel({ onSwitch, onForgot }) {
   const [email,    setEmail]    = useState("");
   const [password, setPassword] = useState("");
   const [error,    setError]    = useState("");
@@ -181,12 +182,228 @@ function LoginPanel({ onSwitch }) {
           {loading ? <><span className="pk-spinner" />CARGANDO...</> : "INICIAR SESIÓN"}
         </button>
       </form>
+      <div className="flex flex-col items-center gap-1 mt-4">
+        <button
+          type="button"
+          className="bg-transparent border-none cursor-pointer text-[0.6rem] text-[#aaa] tracking-[0.05em] leading-[1.8] transition-colors duration-[200ms] hover:text-[#cc0000]"
+          onClick={onForgot}
+        >
+          ¿Has olvidado tu contraseña?
+        </button>
+        <button
+          type="button"
+          className="bg-transparent border-none cursor-pointer text-[0.65rem] text-[#cc0000] tracking-[0.06em] leading-[1.8] transition-colors duration-[200ms] hover:text-[#8b0000] hover:underline"
+          onClick={onSwitch}
+        >
+          NUEVA CUENTA &gt;
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// --- Panel de recuperación de contraseña (sin token) ---
+function ForgotPanel({ onVolver }) {
+  // paso 0: email · paso 1: código · paso 2: nueva contraseña
+  const [paso,        setPaso]        = useState(0);
+  const [email,       setEmail]       = useState("");
+  const [codigo,      setCodigo]      = useState("");
+  const [passNuevo,   setPassNuevo]   = useState("");
+  const [passConfirm, setPassConfirm] = useState("");
+  const [loading,     setLoading]     = useState(false);
+  const [msg,         setMsg]         = useState(null);
+  const [exito,       setExito]       = useState(false);
+
+  const btnCls = "w-full py-5 px-5 bg-[#cc0000] text-white border-none rounded-xl text-[0.78rem] tracking-[0.07em] cursor-pointer leading-[1.6] mt-2 shadow-[0_4px_18px_rgba(204,0,0,0.4),0_2px_0_#8b0000] transition-all duration-[200ms] hover:bg-[#aa0000] hover:shadow-[0_6px_24px_rgba(204,0,0,0.5),0_2px_0_#8b0000] hover:-translate-y-px active:translate-y-px disabled:opacity-65 disabled:cursor-not-allowed disabled:translate-y-0";
+
+  /* Paso 0 → 1: enviar código al email */
+  async function enviarCodigo(e) {
+    e.preventDefault();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setMsg({ text: "Introduce un email válido.", tipo: "err" });
+      return;
+    }
+    setLoading(true); setMsg(null);
+    try {
+      await authApi.enviarResetPublico(email);
+      setPaso(1); setCodigo("");
+    } catch (err) {
+      setMsg({ text: err.message ?? "Error al enviar el código.", tipo: "err" });
+    } finally { setLoading(false); }
+  }
+
+  /* Paso 1 → 2: confirmar que el código tiene 5 dígitos */
+  function verificarCodigo(e) {
+    e.preventDefault();
+    if (codigo.length !== 5) { setMsg({ text: "Introduce los 5 dígitos del código.", tipo: "err" }); return; }
+    setMsg(null);
+    setPaso(2); setPassNuevo(""); setPassConfirm("");
+  }
+
+  /* Paso 2: enviar código + nueva contraseña al backend */
+  async function confirmarReset(e) {
+    e.preventDefault();
+    if (passNuevo.length < 6)      { setMsg({ text: "La contraseña debe tener al menos 6 caracteres.", tipo: "err" }); return; }
+    if (passNuevo !== passConfirm) { setMsg({ text: "Las contraseñas no coinciden.", tipo: "err" }); return; }
+    setLoading(true); setMsg(null);
+    try {
+      await authApi.resetPasswordPublico(email, codigo, passNuevo);
+      setExito(true);
+      setTimeout(() => onVolver(), 2200);
+    } catch (err) {
+      /* Código incorrecto o expirado → volver al paso del código */
+      setMsg({ text: err.message ?? "Código incorrecto o expirado.", tipo: "err" });
+      setPaso(1); setCodigo("");
+    } finally { setLoading(false); }
+  }
+
+  if (exito) {
+    return (
+      <div className="pk-slide-in">
+        <div className="p-[12px_16px] rounded-xl text-[0.7rem] leading-[1.9] pk-fade-in bg-green-600/10 text-green-700 border-[1.5px] border-green-600/25 text-center">
+          ✓ Contraseña restablecida correctamente.<br />Redirigiendo al login…
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Indicador de progreso ── */
+  const pasos = ["Email", "Código", "Contraseña"];
+
+  return (
+    <div className="pk-slide-in">
+      <p className="text-[0.72rem] text-[#cc0000] tracking-[0.06em] text-center mb-4 font-semibold">
+        RECUPERAR CONTRASEÑA
+      </p>
+
+      {/* Stepper */}
+      <div className="flex items-center justify-center gap-1.5 mb-6">
+        {pasos.map((label, i) => (
+          <div key={i} className="flex items-center gap-1.5">
+            <div className="flex flex-col items-center gap-1">
+              <div
+                className="w-6 h-6 rounded-full flex items-center justify-center text-[0.55rem] font-bold transition-all"
+                style={i < paso
+                  ? { background: "#cc0000", color: "#fff" }
+                  : i === paso
+                  ? { background: "#cc0000", color: "#fff", boxShadow: "0 0 0 3px rgba(204,0,0,0.2)" }
+                  : { background: "#e5e5e5", color: "#aaa" }
+                }
+              >
+                {i < paso ? "✓" : i + 1}
+              </div>
+              <span className="text-[0.5rem] tracking-[0.04em]" style={{ color: i <= paso ? "#cc0000" : "#bbb" }}>
+                {label}
+              </span>
+            </div>
+            {i < pasos.length - 1 && (
+              <div className="w-8 h-px mb-4" style={{ background: i < paso ? "#cc0000" : "#e5e5e5" }} />
+            )}
+          </div>
+        ))}
+      </div>
+
+      {msg && (
+        <div className={`p-[12px_16px] rounded-xl text-[0.7rem] leading-[1.9] mb-4 whitespace-pre-line pk-fade-in ${
+          msg.tipo === "ok"
+            ? "bg-green-600/10 text-green-700 border-[1.5px] border-green-600/25"
+            : "bg-red-600/10 text-red-700 border-[1.5px] border-red-500/25"
+        }`}>
+          {msg.text}
+        </div>
+      )}
+
+      {/* ── Paso 0: email ── */}
+      {paso === 0 && (
+        <form onSubmit={enviarCodigo} noValidate>
+          <p className="text-[0.65rem] text-[#888] leading-[1.8] mb-5 text-center">
+            Introduce tu email y te enviaremos un código de 5 dígitos.
+          </p>
+          <div className="mb-5">
+            <label className={labelCls} htmlFor="f-email">EMAIL</label>
+            <div className="relative">
+              <input
+                className={inputCls}
+                id="f-email" type="email"
+                value={email} onChange={e => setEmail(e.target.value)}
+                placeholder="tu@email.com" autoComplete="email" maxLength={254}
+              />
+              <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#aaa] flex items-center p-1"><IconMail /></span>
+            </div>
+          </div>
+          <button type="submit" disabled={loading || !email} className={btnCls}>
+            {loading ? <><span className="pk-spinner" />ENVIANDO…</> : "ENVIAR CÓDIGO"}
+          </button>
+        </form>
+      )}
+
+      {/* ── Paso 1: introducir código ── */}
+      {paso === 1 && (
+        <form onSubmit={verificarCodigo} noValidate>
+          <p className="text-[0.65rem] text-[#888] leading-[1.8] mb-5 text-center">
+            Revisa tu bandeja de entrada en <strong className="text-[#cc0000]">{email}</strong> e introduce el código de 5 dígitos.
+          </p>
+          <div className="mb-5">
+            <label className={labelCls} htmlFor="f-code">CÓDIGO DE VERIFICACIÓN</label>
+            <input
+              className={`${inputCls} text-center text-[1.5rem] tracking-[0.45em] font-mono`}
+              id="f-code" type="text" inputMode="numeric" maxLength={5}
+              value={codigo} onChange={e => setCodigo(e.target.value.replace(/\D/g, ""))}
+              placeholder="· · · · ·" autoFocus
+            />
+          </div>
+          <button type="submit" disabled={codigo.length !== 5} className={btnCls}>
+            VERIFICAR CÓDIGO →
+          </button>
+          <button
+            type="button"
+            onClick={() => { setPaso(0); setCodigo(""); setMsg(null); }}
+            className="bg-transparent border-none cursor-pointer text-[0.62rem] text-[#aaa] tracking-[0.05em] block text-center w-full mt-3 transition-colors hover:text-[#888]"
+          >
+            No recibí el código · Volver a enviar
+          </button>
+        </form>
+      )}
+
+      {/* ── Paso 2: nueva contraseña ── */}
+      {paso === 2 && (
+        <form onSubmit={confirmarReset} noValidate>
+          <p className="text-[0.65rem] text-[#888] leading-[1.8] mb-5 text-center">
+            Código verificado. Introduce tu nueva contraseña.
+          </p>
+          <div className="mb-5">
+            <label className={labelCls} htmlFor="f-pass">NUEVA CONTRASEÑA</label>
+            <PasswordInput
+              id="f-pass" value={passNuevo}
+              onChange={e => setPassNuevo(e.target.value)}
+              placeholder="Mínimo 6 caracteres" autoComplete="new-password"
+            />
+            <StrengthBar password={passNuevo} />
+          </div>
+          <div className="mb-5">
+            <label className={labelCls} htmlFor="f-confirm">CONFIRMAR CONTRASEÑA</label>
+            <PasswordInput
+              id="f-confirm" value={passConfirm}
+              onChange={e => setPassConfirm(e.target.value)}
+              placeholder="Repite la contraseña" autoComplete="new-password"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={loading || !passNuevo || !passConfirm}
+            className={btnCls}
+          >
+            {loading ? <><span className="pk-spinner" />RESTABLECIENDO…</> : "RESTABLECER CONTRASEÑA"}
+          </button>
+        </form>
+      )}
+
       <button
         type="button"
         className="bg-transparent border-none cursor-pointer text-[0.65rem] text-[#cc0000] tracking-[0.06em] leading-[1.8] block text-center w-full mt-5 transition-colors duration-[200ms] hover:text-[#8b0000] hover:underline"
-        onClick={onSwitch}
+        onClick={onVolver}
       >
-        NUEVA CUENTA &gt;
+        ← VOLVER AL LOGIN
       </button>
     </div>
   );
@@ -319,7 +536,7 @@ function RegisterPanel({ onSwitch }) {
 // --- Página principal ---
 export default function AuthPanel() {
   usePageMusic(loginMusic);
-  const [tab, setTab] = useState("login");
+  const [tab, setTab] = useState("login"); // "login" | "register" | "forgot"
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -345,11 +562,13 @@ export default function AuthPanel() {
       <div className="flex-1 min-h-0 flex items-center justify-center py-4 overflow-hidden">
         <div className="w-full max-w-[540px] mx-4 bg-white/90 rounded-3xl border-2 border-white/50 shadow-[0_8px_40px_rgba(0,0,0,0.3),0_2px_8px_rgba(0,0,0,0.18)] overflow-hidden pk-card-in">
 
-          {/* Tabs */}
-          <div className="grid grid-cols-2 border-b-[3px] border-black/10" role="tablist">
-            <button className={tabCls("login")}    role="tab" aria-selected={tab === "login"}    onClick={() => setTab("login")}>INICIAR SESIÓN</button>
-            <button className={tabCls("register")} role="tab" aria-selected={tab === "register"} onClick={() => setTab("register")}>REGISTRO</button>
-          </div>
+          {/* Tabs (se ocultan en el panel de recuperación) */}
+          {tab !== "forgot" && (
+            <div className="grid grid-cols-2 border-b-[3px] border-black/10" role="tablist">
+              <button className={tabCls("login")}    role="tab" aria-selected={tab === "login"}    onClick={() => setTab("login")}>INICIAR SESIÓN</button>
+              <button className={tabCls("register")} role="tab" aria-selected={tab === "register"} onClick={() => setTab("register")}>REGISTRO</button>
+            </div>
+          )}
 
           {/* Cuerpo */}
           <div className="px-10 pt-10 pb-12">
@@ -360,10 +579,19 @@ export default function AuthPanel() {
               <span className="text-[0.62rem] text-[#888] tracking-[0.1em] leading-[1.8]">ENCICLOPEDIA POKÉMON</span>
             </div>
 
-            {tab === "login"
-              ? <LoginPanel    key="login"    onSwitch={() => setTab("register")} />
-              : <RegisterPanel key="register" onSwitch={() => setTab("login")} />
-            }
+            {tab === "login" && (
+              <LoginPanel
+                key="login"
+                onSwitch={() => setTab("register")}
+                onForgot={() => setTab("forgot")}
+              />
+            )}
+            {tab === "register" && (
+              <RegisterPanel key="register" onSwitch={() => setTab("login")} />
+            )}
+            {tab === "forgot" && (
+              <ForgotPanel key="forgot" onVolver={() => setTab("login")} />
+            )}
           </div>
         </div>
       </div>

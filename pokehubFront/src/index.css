@@ -106,6 +106,10 @@ html, body {
   0%,100% { transform: scale(1); }
   50%     { transform: scale(1.08); }
 }
+@keyframes pkBadgePulse {
+  0%,100% { opacity: 0.7; transform: translateX(-50%) scale(1); }
+  50%     { opacity: 1;   transform: translateX(-50%) scale(1.03); }
+}
 
 /* ── Named animation classes (can't be done purely in Tailwind) ── */
 .pk-pokeball-spinning  { animation: pokeSpin 0.8s linear; }

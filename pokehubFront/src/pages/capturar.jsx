@@ -20,8 +20,16 @@ const PROBABILIDADES_BASE = [
   { key: "mitico",     label: "Mítico",     pct: 0.5,  color: "#ff7043" },
 ];
 
-// Monedas que recibe el usuario si captura un Pokémon que ya tiene
-const MONEDAS_COMPENSACION = 15;
+/* Monedas de compensación según rareza del Pokémon duplicado */
+const MONEDAS_POR_RAREZA = {
+  comun:      15,
+  poco_comun: 20,
+  raro:       30,
+  epico:      50,
+  legendario: 100,
+  mitico:     300,
+};
+const getCompensacion = rareza => MONEDAS_POR_RAREZA[rareza] ?? 15;
 
 /* Items que funcionan por rondas — fuente única de verdad para lógica y UI */
 const ITEMS_RONDAS = [
@@ -205,7 +213,7 @@ function BadgeItem({ icon, label, rondasRestantes, rondasMax, color, children, o
    Se muestra cuando el Pokémon queda revelado. Informa si es
    nuevo, duplicado, shiny o si se usó un ticket.
 ───────────────────────────────────────────────────────────── */
-function ModalCaptura({ pokemon, duplicado, compensacionRecibida, ticketUsado, onClose }) {
+function ModalCaptura({ pokemon, duplicado, compensacionRecibida, monedasCompensacion, ticketUsado, onClose }) {
   const colorRareza = RAREZA_COLORS[normalizarRareza(pokemon.rareza)] ?? RAREZA_COLORS.comun;
   // Las rareza "épico", "legendario" y "mítico" tienen efecto de brillo extra
   const esRarezaAlta = ["legendario", "mitico", "epico"].includes(normalizarRareza(pokemon.rareza));
@@ -261,7 +269,7 @@ function ModalCaptura({ pokemon, duplicado, compensacionRecibida, ticketUsado, o
               </div>
               {compensacionRecibida && (
                 <div className="w-full bg-yellow-400/12 border-[1.5px] border-yellow-400/45 rounded-2xl px-5 py-3 text-center pk-fade-in">
-                  <p className="text-[0.82rem] text-[#ffcb05] tracking-[0.03em]">💰 +{MONEDAS_COMPENSACION} monedas de compensación</p>
+                  <p className="text-[0.82rem] text-[#ffcb05] tracking-[0.03em]">💰 +{monedasCompensacion} monedas de compensación</p>
                 </div>
               )}
             </div>
@@ -362,9 +370,10 @@ export default function Capturar() {
   const [pokemonRevelado,   setPokemonRevelado]   = useState(null);
 
   // Flags del resultado de la última captura
-  const [esDuplicado,       setEsDuplicado]       = useState(false);
+  const [esDuplicado,          setEsDuplicado]          = useState(false);
   const [compensacionRecibida, setCompensacionRecibida] = useState(false);
-  const [ticketUsado,       setTicketUsado]       = useState(false);
+  const [monedasRecibidas,     setMonedasRecibidas]     = useState(0);
+  const [ticketUsado,          setTicketUsado]          = useState(false);
 
   // Mensaje de error o éxito en pantalla
   const [alerta,            setAlerta]            = useState(null);
@@ -471,12 +480,8 @@ export default function Capturar() {
         };
         setItemsInventario(itemsCargados);
 
-        // Inicializar bonificaciones según inventario (rondas via ITEMS_RONDAS)
-        const cantidadDe = clave => itemsCargados[clave]?.inv?.cantidad ?? 0;
-        const rondasIniciales = Object.fromEntries(
-          ITEMS_RONDAS.map(({ clave, campo, rondasMax }) => [campo, cantidadDe(clave) > 0 ? rondasMax : 0])
-        );
-        setBonificaciones({ amuleto: cantidadDe("amuleto") > 0, ...rondasIniciales, usarTicket: false });
+        // Todos los items empiezan desactivados: el usuario los activa desde el panel
+        setBonificaciones({ amuleto: false, tokenIVRondas: 0, charmRaroRondas: 0, charmEpicoRondas: 0, charmLegRondas: 0, usarTicket: false });
       } catch (error) {
         setAlerta({ tipo: "error", msg: error.message ?? "Error al cargar." });
       } finally {
@@ -489,8 +494,8 @@ export default function Capturar() {
   /* ─────────────────────────────────────────────────────────
      ACTUALIZAR BONIFICACIONES TRAS CADA CAPTURA
      Decrementa las rondas de los items temporales. Cuando llegan
-     a 0 consume 1 unidad del inventario en el backend; si quedan
-     más unidades reinicia las rondas automáticamente.
+     a 0 consume 1 unidad del inventario y desactiva el item
+     (el usuario debe volver a activarlo manualmente si quiere).
 
      Recibe COPIAS de los estados para evitar
      stale closures dentro de la función async handleCapturar.
@@ -512,13 +517,13 @@ export default function Capturar() {
       return cantidadRestante;
     }
 
-    // Items con rondas: decrementar y consumir unidad al agotarse
-    for (const { clave, campo, rondasMax } of ITEMS_RONDAS) {
+    // Items con rondas: decrementar y consumir unidad al agotarse (sin refill auto)
+    for (const { clave, campo } of ITEMS_RONDAS) {
       if (nuevasBonif[campo] > 0) {
         nuevasBonif[campo]--;
         if (nuevasBonif[campo] === 0) {
-          const restante = consumirItem(clave);
-          if (restante > 0) nuevasBonif[campo] = rondasMax;
+          consumirItem(clave);
+          // No se recarga automáticamente: el usuario elige cuándo volver a activar
         }
       }
     }
@@ -530,6 +535,52 @@ export default function Capturar() {
 
     setBonificaciones(nuevasBonif);
     setItemsInventario(nuevoItems);
+  }
+
+  /* ─────────────────────────────────────────────────────────
+     ACTIVAR / DESACTIVAR ITEMS MANUALMENTE DESDE EL PANEL
+     - Amuleto y Ticket: toggle simple.
+     - Items de rondas: activar gasta 1 unidad y otorga rondasMax;
+       desactivar antes de tiempo cancela las rondas restantes
+       (la unidad ya fue consumida en el momento de activar).
+  ───────────────────────────────────────────────────────── */
+  function toggleItem(clave) {
+    const cantidad = itemsInventario[clave]?.inv?.cantidad ?? 0;
+
+    if (clave === "amuleto") {
+      if (!bonificaciones.amuleto && cantidad <= 0) return;
+      setBonificaciones(prev => ({ ...prev, amuleto: !prev.amuleto }));
+      return;
+    }
+
+    if (clave === "ticket") {
+      if (!bonificaciones.usarTicket && cantidad <= 0) return;
+      setBonificaciones(prev => ({ ...prev, usarTicket: !prev.usarTicket }));
+      return;
+    }
+
+    const itemDef = ITEMS_RONDAS.find(i => i.clave === clave);
+    if (!itemDef) return;
+    const { campo, rondasMax } = itemDef;
+    const estaActivo = bonificaciones[campo] > 0;
+
+    if (estaActivo) {
+      // Desactivar: cancelar rondas restantes (la unidad ya fue consumida al activar)
+      setBonificaciones(prev => ({ ...prev, [campo]: 0 }));
+    } else {
+      // Activar: necesita al menos 1 unidad disponible
+      if (cantidad <= 0) return;
+      // Consumir 1 unidad del inventario de forma optimista
+      const nuevaCantidad = Math.max(cantidad - 1, 0);
+      setItemsInventario(prev => ({
+        ...prev,
+        [clave]: { ...prev[clave], inv: { ...(prev[clave]?.inv ?? {}), cantidad: nuevaCantidad } },
+      }));
+      if (itemsInventario[clave]?.prod && usuario?.id) {
+        inventarioApi.updateCantidad(usuario.id, itemsInventario[clave].prod.id, nuevaCantidad).catch(() => {});
+      }
+      setBonificaciones(prev => ({ ...prev, [campo]: rondasMax }));
+    }
   }
 
   /* ─────────────────────────────────────────────────────────
@@ -545,9 +596,6 @@ export default function Capturar() {
   async function handleCapturar() {
     if (!usuario?.id || estadoCaptura !== "idle") return;
     if (cantidadPokeballs === null || cantidadPokeballs <= 0) return;
-
-    // Pausar música para que suene el efecto de captura
-    pausarMusica();
 
     /* Snapshots: copias del estado actual para evitar que la función
        async lea valores stale si los estados cambian durante la espera */
@@ -601,7 +649,8 @@ export default function Capturar() {
     setPokemonRevelado({ ...pokemonSeleccionado, shiny: esShiny });
     setEstadoCaptura("revelando");
 
-    // Reproducir efecto de sonido al mostrar el modal
+    // Pausar música justo antes del efecto de captura (sin silencio entre ambos)
+    pausarMusica();
     reproducirEfecto(sonidoCapturado);
 
     if (!esDupl) {
@@ -625,11 +674,14 @@ export default function Capturar() {
         setAlerta({ tipo: "error", msg: error.message ?? "Error al guardar la captura." });
       }
     } else {
-      // Pokémon duplicado: compensar con monedas
+      // Pokémon duplicado: compensar con monedas según rareza
       try {
-        const saldoActualizado = +((saldoActual ?? 0) + MONEDAS_COMPENSACION).toFixed(2);
+        const rareza       = normalizarRareza(pokemonSeleccionado.rareza);
+        const compensacion = getCompensacion(rareza);
+        const saldoActualizado = +((saldoActual ?? 0) + compensacion).toFixed(2);
         await authApi.updateDinero(saldoActualizado);
         setSaldoActual(saldoActualizado);
+        setMonedasRecibidas(compensacion);
         setCompensacionRecibida(true);
       } catch { /* silencioso */ }
     }
@@ -653,12 +705,12 @@ export default function Capturar() {
   const sinPokeballs           = cantidadPokeballs !== null && cantidadPokeballs <= 0;
   const puedeCapturar          = enReposo && !cargando && !sinPokeballs && cantidadPokeballs !== null;
   const tieneTickets           = (itemsInventario.ticket?.inv?.cantidad ?? 0) > 0;
-  const tieneItemsActivos      = bonificaciones.amuleto        ||
-                                  bonificaciones.tokenIVRondas   > 0 ||
-                                  bonificaciones.charmRaroRondas > 0 ||
+  const tieneItemsActivos      = bonificaciones.amuleto         ||
+                                  bonificaciones.tokenIVRondas    > 0 ||
+                                  bonificaciones.charmRaroRondas  > 0 ||
                                   bonificaciones.charmEpicoRondas > 0 ||
-                                  bonificaciones.charmLegRondas  > 0 ||
-                                  tieneTickets;
+                                  bonificaciones.charmLegRondas   > 0 ||
+                                  bonificaciones.usarTicket;
   // Color de borde y fondo cambian cuando el Ticket está activo
   const colorBorde     = bonificaciones.usarTicket ? "rgba(255,112,67,0.55)" : "rgba(227,0,11,0.3)";
   const degradadoFondo = bonificaciones.usarTicket
@@ -859,51 +911,80 @@ export default function Capturar() {
             <div className="px-6 py-5 border-t border-white/10 bg-yellow-400/[0.05]">
               <div className="flex items-start gap-3">
                 <span className="text-xl flex-shrink-0">💰</span>
-                <div>
+                <div className="w-full">
                   <p className="text-[0.72rem] text-[#ffcb05] leading-[1.6] tracking-[0.03em]">¡Pokémon duplicado!</p>
-                  <p className="text-[0.65rem] text-white/45 leading-[2] mt-1.5">
-                    Si ya lo tienes recibirás <span className="text-[#ffcb05]">{MONEDAS_COMPENSACION} monedas</span> de compensación.
-                  </p>
+                  <p className="text-[0.62rem] text-white/40 leading-[1.9] mt-1">Recibirás monedas según la rareza:</p>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 mt-1.5">
+                    {Object.entries(MONEDAS_POR_RAREZA).map(([rar, coins]) => {
+                      const info = PROBABILIDADES_BASE.find(p => p.key === rar);
+                      return (
+                        <div key={rar} className="flex items-center justify-between gap-1">
+                          <span className="text-[0.55rem]" style={{ color: info?.color ?? "#aaa" }}>{info?.label ?? rar}</span>
+                          <span className="text-[0.58rem] text-[#ffcb05]">{coins} 💰</span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Lista de items con cantidad en inventario */}
+            {/* Lista de items con botones de activar/desactivar */}
             {!cargando && (
               <div className="px-6 py-5 border-t border-white/10">
                 <p className="text-[0.65rem] text-white/35 tracking-[0.04em] mb-4">Items de captura</p>
                 <div className="flex flex-col gap-3">
                   {[
-                    { clave: "amuleto",    icon: "🍀", label: "Amuleto de Suerte",    cantidad: itemsInventario.amuleto?.inv?.cantidad    ?? 0, activo: bonificaciones.amuleto,           desc: "Boost permanente de rareza" },
-                    { clave: "tokenIV",    icon: "🔮", label: "Token de IV",           cantidad: itemsInventario.tokenIV?.inv?.cantidad    ?? 0, activo: bonificaciones.tokenIVRondas   > 0, desc: "Mín. Raro · 3 tiradas/ud." },
-                    { clave: "charmRaro",  icon: "⚡", label: "Charm Raro",           cantidad: itemsInventario.charmRaro?.inv?.cantidad  ?? 0, activo: bonificaciones.charmRaroRondas > 0, desc: "+12% Raro · 5 rondas/ud." },
-                    { clave: "charmEpico", icon: "💎", label: "Charm Épico",          cantidad: itemsInventario.charmEpico?.inv?.cantidad ?? 0, activo: bonificaciones.charmEpicoRondas> 0, desc: "+8% Épico · 5 rondas/ud." },
-                    { clave: "charmLeg",   icon: "🌟", label: "Charm Legendario",     cantidad: itemsInventario.charmLeg?.inv?.cantidad   ?? 0, activo: bonificaciones.charmLegRondas  > 0, desc: "+5% Leg/Mítico · 5 ron/ud." },
-                    { clave: "ticket",     icon: "🎟️", label: "Ticket de Invocación", cantidad: itemsInventario.ticket?.inv?.cantidad     ?? 0, activo: bonificaciones.usarTicket,         desc: "Leg/Mítico garantizado" },
-                  ].map(item => (
-                    <div key={item.clave} className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[0.8rem]">{item.icon}</span>
-                        <div>
-                          <p className="text-[0.65rem] text-white/70">{item.label}</p>
-                          <p className="text-[0.55rem] text-white/30 leading-[1.5]">{item.desc}</p>
+                    { clave: "amuleto",    icon: "🍀", label: "Amuleto de Suerte",    cantidad: itemsInventario.amuleto?.inv?.cantidad    ?? 0, activo: bonificaciones.amuleto,            desc: "Boost permanente de rareza",    rondas: null },
+                    { clave: "tokenIV",    icon: "🔮", label: "Token de IV",           cantidad: itemsInventario.tokenIV?.inv?.cantidad    ?? 0, activo: bonificaciones.tokenIVRondas   > 0, desc: "Mín. Raro · 3 tiradas/ud.",   rondas: bonificaciones.tokenIVRondas   },
+                    { clave: "charmRaro",  icon: "⚡", label: "Charm Raro",           cantidad: itemsInventario.charmRaro?.inv?.cantidad  ?? 0, activo: bonificaciones.charmRaroRondas > 0, desc: "+12% Raro · 5 rondas/ud.",    rondas: bonificaciones.charmRaroRondas },
+                    { clave: "charmEpico", icon: "💎", label: "Charm Épico",          cantidad: itemsInventario.charmEpico?.inv?.cantidad ?? 0, activo: bonificaciones.charmEpicoRondas> 0, desc: "+8% Épico · 5 rondas/ud.",   rondas: bonificaciones.charmEpicoRondas},
+                    { clave: "charmLeg",   icon: "🌟", label: "Charm Legendario",     cantidad: itemsInventario.charmLeg?.inv?.cantidad   ?? 0, activo: bonificaciones.charmLegRondas  > 0, desc: "+5% Leg/Mítico · 5 ron/ud.",  rondas: bonificaciones.charmLegRondas  },
+                    { clave: "ticket",     icon: "🎟️", label: "Ticket de Invocación", cantidad: itemsInventario.ticket?.inv?.cantidad     ?? 0, activo: bonificaciones.usarTicket,          desc: "Leg/Mítico garantizado",        rondas: null },
+                  ].map(item => {
+                    const sinStock = item.cantidad <= 0;
+                    const puedeActivar = !item.activo && !sinStock;
+                    return (
+                      <div key={item.clave} className="flex items-center justify-between gap-2">
+                        {/* Info del item */}
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-[0.8rem] flex-shrink-0">{item.icon}</span>
+                          <div className="min-w-0">
+                            <p className="text-[0.65rem] text-white/70 truncate">{item.label}</p>
+                            <p className="text-[0.52rem] text-white/30 leading-[1.5]">
+                              {item.activo && item.rondas !== null
+                                ? <span className="text-green-400">{item.rondas} ronda{item.rondas !== 1 ? "s" : ""} restante{item.rondas !== 1 ? "s" : ""}</span>
+                                : item.desc}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Cantidad + botón */}
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <span
+                            className="text-[0.65rem] font-bold w-5 text-center"
+                            style={{ color: sinStock ? "rgba(255,255,255,0.18)" : "#ffcb05" }}
+                          >
+                            {item.cantidad}
+                          </span>
+                          <button
+                            onClick={() => toggleItem(item.clave)}
+                            disabled={!item.activo && sinStock}
+                            className="text-[0.55rem] px-2.5 py-1 rounded-full border transition-all cursor-pointer"
+                            style={
+                              item.activo
+                                ? { background: "rgba(239,68,68,0.15)", borderColor: "rgba(239,68,68,0.4)", color: "#f87171" }
+                                : puedeActivar
+                                  ? { background: "rgba(74,222,128,0.12)", borderColor: "rgba(74,222,128,0.35)", color: "#4ade80" }
+                                  : { background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.2)", cursor: "not-allowed" }
+                            }
+                          >
+                            {item.activo ? "Desactivar" : "Activar"}
+                          </button>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        {item.activo && (
-                          <span className="text-[0.55rem] text-green-400 bg-green-400/12 px-2 py-0.5 rounded-full border border-green-400/30">
-                            ACTIVO
-                          </span>
-                        )}
-                        <span
-                          className="text-[0.72rem] font-bold w-6 text-center"
-                          style={{ color: item.cantidad > 0 ? "#ffcb05" : "rgba(255,255,255,0.2)" }}
-                        >
-                          {item.cantidad}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -938,6 +1019,7 @@ export default function Capturar() {
           pokemon={pokemonRevelado}
           duplicado={esDuplicado}
           compensacionRecibida={compensacionRecibida}
+          monedasCompensacion={monedasRecibidas}
           ticketUsado={ticketUsado}
           onClose={cerrarModal}
         />

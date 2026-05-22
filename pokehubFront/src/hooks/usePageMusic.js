@@ -23,14 +23,18 @@ export function usePageMusic(rutaAudio) {
     elementoAudio.volume = 0.1;
     refAudio.current = elementoAudio;
 
+    // Guardamos la referencia del listener de "primer click" para poder quitarlo al desmontar
+    let alInteractuar = null;
+
     if (musicaEstaActiva()) {
       // Intentar reproducir directamente; si el navegador bloquea el autoplay
       // esperamos a la primera interacción del usuario para iniciarlo
       elementoAudio.play().catch(() => {
-        const alInteractuar = () => {
+        alInteractuar = () => {
           if (musicaEstaActiva()) elementoAudio.play().catch(() => {});
           document.removeEventListener("click",   alInteractuar);
           document.removeEventListener("keydown", alInteractuar);
+          alInteractuar = null;
         };
         document.addEventListener("click",   alInteractuar);
         document.addEventListener("keydown", alInteractuar);
@@ -51,6 +55,11 @@ export function usePageMusic(rutaAudio) {
       elementoAudio.pause();
       elementoAudio.src = "";
       window.removeEventListener("musica-update", alCambiarMusica);
+      // Limpiar el listener de primer click si el componente se desmonta antes de que el usuario interactúe
+      if (alInteractuar) {
+        document.removeEventListener("click",   alInteractuar);
+        document.removeEventListener("keydown", alInteractuar);
+      }
     };
   }, [rutaAudio]);
 

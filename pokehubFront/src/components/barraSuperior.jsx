@@ -27,16 +27,17 @@ function PokeBallSVG({ size = 58, className = "" }) {
 }
 
 export default function BarraSuperior({ navLinks = DEFAULT_NAV_LINKS, userAvatar = null }) {
-  const [menuOpen,    setMenuOpen]    = useState(false);
-  const [animation,   setAnimation]   = useState("");
-  const [userName,    setUserName]    = useState("Entrenador");
-  const [userEmail,   setUserEmail]   = useState("");
-  const [userId,      setUserId]      = useState(null);
-  const [isAdmin,     setIsAdmin]     = useState(false);
-  const [saldo,       setSaldo]       = useState(null);
-  const [pokeballs,   setPokeballs]   = useState(null);
-  const [modalConfig, setModalConfig] = useState(false);
-  const [modalAdmin,  setModalAdmin]  = useState(false);
+  const [menuOpen,       setMenuOpen]       = useState(false);
+  const [animation,      setAnimation]      = useState("");
+  const [userName,       setUserName]       = useState("Entrenador");
+  const [userEmail,      setUserEmail]      = useState("");
+  const [userId,         setUserId]         = useState(null);
+  const [isAdmin,        setIsAdmin]        = useState(false);
+  const [userVerificado, setUserVerificado] = useState(false);
+  const [saldo,          setSaldo]          = useState(null);
+  const [pokeballs,      setPokeballs]      = useState(null);
+  const [modalConfig,    setModalConfig]    = useState(false);
+  const [modalAdmin,     setModalAdmin]     = useState(false);
 
   const location    = useLocation();
   const navigate    = useNavigate();
@@ -54,6 +55,7 @@ export default function BarraSuperior({ navLinks = DEFAULT_NAV_LINKS, userAvatar
           setUserEmail(data.email ?? "");
           setUserId(data.id ?? null);
           setIsAdmin(data.admin === 1);
+          setUserVerificado(data.verificado ?? false);
           setSaldo(data.dinero ?? 0);
 
           // Cargar pokeballs del inventario
@@ -84,6 +86,13 @@ export default function BarraSuperior({ navLinks = DEFAULT_NAV_LINKS, userAvatar
     }
     window.addEventListener("saldo-update", onSaldoUpdate);
     return () => window.removeEventListener("saldo-update", onSaldoUpdate);
+  }, []);
+
+  /* Escuchar evento de verificación de email (disparado desde el modal) */
+  useEffect(() => {
+    function onEmailVerificado() { setUserVerificado(true); }
+    window.addEventListener("email-verificado", onEmailVerificado);
+    return () => window.removeEventListener("email-verificado", onEmailVerificado);
   }, []);
 
   /* Escuchar evento global de pokeballs */
@@ -315,6 +324,7 @@ export default function BarraSuperior({ navLinks = DEFAULT_NAV_LINKS, userAvatar
         userName={userName}
         userEmail={userEmail}
         userId={userId}
+        userVerificado={userVerificado}
       />
 
       {/* Modal panel admin */}

@@ -100,6 +100,27 @@ export const authApi = {
   /** PATCH /auth/me/password — Cambia la contraseña del usuario autenticado */
   updatePassword: (password_actual, password_nuevo) =>
     api.patch("/auth/me/password", { password_actual, password_nuevo }),
+
+  /** POST /auth/enviar-verificacion — Envía OTP al email para verificar la cuenta */
+  enviarVerificacion: () => api.post("/auth/enviar-verificacion", {}),
+
+  /** POST /auth/verificar-email — Confirma el código OTP y marca la cuenta como verificada */
+  verificarEmail: (codigo) => api.post("/auth/verificar-email", { codigo }),
+
+  /** POST /auth/enviar-reset — Envía OTP al email para restablecer la contraseña */
+  enviarReset: () => api.post("/auth/enviar-reset", {}),
+
+  /** POST /auth/reset-password-otp — Verifica el OTP y establece la nueva contraseña */
+  resetPasswordOtp: (codigo, password_nuevo) =>
+    api.post("/auth/reset-password-otp", { codigo, password_nuevo }),
+
+  /** POST /auth/enviar-reset-publico — Envía OTP sin necesitar token (desde login) */
+  enviarResetPublico: (email) =>
+    api.post("/auth/enviar-reset-publico", { email }),
+
+  /** POST /auth/reset-password-publico — Restablece contraseña sin token */
+  resetPasswordPublico: (email, codigo, password_nuevo) =>
+    api.post("/auth/reset-password-publico", { email, codigo, password_nuevo }),
 };
 
 // ── /users ────────────────────────────────────────────────

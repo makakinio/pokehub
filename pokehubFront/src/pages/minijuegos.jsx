@@ -9,7 +9,7 @@ const JUEGOS = [
     key: "alto-bajo",
     emoji: "🎲",
     titulo: "Alto o Bajo",
-    desc: "Apuesta monedas y adivina si el siguiente número es mayor o menor. ¡Si aciertas, ganas lo apostado!",
+    desc: "Apuesta monedas y adivina si el siguiente número es mayor o menor. ¡Si aciertas, ganas lo apostado! Sin límite de partidas.",
     href: "/minijuegos/alto-bajo",
     disponible: true,
     color: "#e3000b",
@@ -20,14 +20,25 @@ const JUEGOS = [
     key: "clicks",
     emoji: "👆",
     titulo: "Clicker Pokémon",
-    desc: "Clickea la Pokéball lo más rápido que puedas. Cada click te da monedas sin límite.",
+    desc: "Clickea la Pokéball lo más rápido que puedas. Cada click te da monedas sin límite de partidas ni de ganancias.",
     href: "/minijuegos/clicks",
     disponible: true,
     color: "#ffcb05",
     tag: "💰 Gana monedas",
     ganaCoin: true,
-  }
-  
+  },
+  {
+    key: "ruleta",
+    emoji: "🎡",
+    titulo: "Ruleta Diaria",
+    desc: "Gira la ruleta una vez al día y gana hasta 1000 monedas. Ocho premios posibles, todos con la misma probabilidad.",
+    href: "/minijuegos/ruleta",
+    disponible: true,
+    color: "#8b5cf6",
+    tag: "🎁 1 tirada gratis/día",
+    ganaCoin: true,
+    diario: true,
+  },
 ];
 
 export default function Minijuegos() {
@@ -89,6 +100,20 @@ export default function Minijuegos() {
               {!cargando && monedaFortuna && juego.ganaCoin && juego.disponible && (
                 <div className="absolute top-4 right-4 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[0.6rem] text-[#ffcb05] bg-[rgba(255,203,5,0.15)] border border-[rgba(255,203,5,0.4)]">
                   🪙 ×1.5
+                </div>
+              )}
+
+              {/* Badge "1/día" para la ruleta */}
+              {juego.diario && juego.disponible && (
+                <div
+                  className="absolute top-4 left-4 z-10 flex items-center gap-1 px-2.5 py-1 rounded-full text-[0.58rem]"
+                  style={{
+                    color: juego.color,
+                    background: `${juego.color}18`,
+                    border: `1px solid ${juego.color}50`,
+                  }}
+                >
+                  📅 1/día
                 </div>
               )}
 

@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useEfectoClick } from "./hooks/useEfectoClick.js";
 
@@ -13,6 +13,7 @@ const Biblioteca    = lazy(() => import("./pages/biblioteca"));
 const Minijuegos    = lazy(() => import("./pages/minijuegos"));
 const AltoOBajo     = lazy(() => import("./pages/altoOBajo"));
 const ClickGame     = lazy(() => import("./pages/clickGame"));
+const Ruleta        = lazy(() => import("./pages/ruleta"));
 const NotFound      = lazy(() => import("./pages/notFound"));
 
 /* ── Loader mostrado mientras se descarga el chunk de la ruta ── */
@@ -42,12 +43,74 @@ function PageLoader() {
   );
 }
 
+/**
+ * Badge flotante que informa al usuario de que el audio espera su primera interacción.
+ * Desaparece en cuanto el navegador detecta un gesto del usuario (click / tecla).
+ * Solo se muestra si el autoplay fue bloqueado por la política del navegador.
+ */
+function AudioUnlockHint() {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    // Intentar reproducir audio silencioso para detectar si autoplay está bloqueado
+    const sonda = new Audio();
+    sonda.volume = 0;
+    sonda.src =
+      "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
+
+    sonda.play().then(() => {
+      // Autoplay permitido → no hace falta badge
+      sonda.src = "";
+    }).catch(() => {
+      // Autoplay bloqueado → mostrar badge
+      setVisible(true);
+
+      const ocultar = () => setVisible(false);
+      document.addEventListener("click",   ocultar, { once: true });
+      document.addEventListener("keydown", ocultar, { once: true });
+    });
+
+    return () => { sonda.src = ""; };
+  }, []);
+
+  if (!visible) return null;
+
+  return (
+    <div
+      style={{
+        position:     "fixed",
+        bottom:       "1.25rem",
+        left:         "50%",
+        transform:    "translateX(-50%)",
+        zIndex:       9999,
+        display:      "flex",
+        alignItems:   "center",
+        gap:          "0.5rem",
+        background:   "rgba(0,0,0,0.82)",
+        border:       "1.5px solid rgba(255,203,5,0.35)",
+        borderRadius: "999px",
+        padding:      "0.45rem 1.1rem",
+        color:        "rgba(255,203,5,0.9)",
+        fontSize:     "0.72rem",
+        letterSpacing:"0.05em",
+        backdropFilter: "blur(6px)",
+        pointerEvents: "none",        // no bloquea clicks
+        animation:    "pkBadgePulse 1.8s ease-in-out infinite",
+      }}
+    >
+      <span style={{ fontSize: "1rem" }}>🎵</span>
+      Pulsa en cualquier lugar para activar el audio
+    </div>
+  );
+}
+
 function App() {
   // Efecto de sonido global: suena en cada click sobre botones/controles interactivos
   useEfectoClick();
 
   return (
     <div className="fondo">
+      <AudioUnlockHint />
       <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
           <Routes>
@@ -61,6 +124,7 @@ function App() {
             <Route path="/minijuegos"          element={<Minijuegos />} />
             <Route path="/minijuegos/alto-bajo" element={<AltoOBajo />} />
             <Route path="/minijuegos/clicks"   element={<ClickGame />} />
+            <Route path="/minijuegos/ruleta"   element={<Ruleta />} />
             <Route path="*"                    element={<NotFound />} />
           </Routes>
         </Suspense>
