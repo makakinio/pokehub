@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 20-05-2026 a las 23:19:53
+-- Tiempo de generación: 29-05-2026 a las 21:16:39
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -61,7 +61,8 @@ CREATE TABLE `config_usuarios` (
 
 INSERT INTO `config_usuarios` (`id_usuario`, `idioma`, `musica`, `sonido`) VALUES
 (7, 'esp', 1, 1),
-(8, 'esp', 1, 0);
+(8, 'esp', 1, 1),
+(9, 'esp', 1, 1);
 
 -- --------------------------------------------------------
 
@@ -88,7 +89,12 @@ INSERT INTO `detalle_pedido` (`id_pedido`, `id_producto`, `cantidad`) VALUES
 (6, 21, 1),
 (7, 21, 1),
 (8, 21, 1),
-(9, 21, 4);
+(9, 21, 4),
+(10, 21, 1),
+(11, 21, 1),
+(12, 21, 1),
+(13, 15, 1),
+(14, 21, 2);
 
 -- --------------------------------------------------------
 
@@ -115,7 +121,8 @@ CREATE TABLE `equipos` (
 
 INSERT INTO `equipos` (`id`, `id_usuario`, `nombre`, `fecha_creacion`, `id_pokemon_usuario_01`, `id_pokemon_usuario_02`, `id_pokemon_usuario_03`, `id_pokemon_usuario_04`, `id_pokemon_usuario_05`, `id_pokemon_usuario_06`) VALUES
 (1, 7, 'Equipo 1', '2026-05-19', 2, 3, 4, 5, 6, 7),
-(2, 7, 'ee', '2026-05-19', 3, 7, 11, 15, 12, 13);
+(2, 7, 'ee', '2026-05-19', 3, 7, 11, 15, 12, 13),
+(3, 9, 'Prueba', '2026-05-21', 36, 37, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -134,9 +141,12 @@ CREATE TABLE `inventario_usuario` (
 --
 
 INSERT INTO `inventario_usuario` (`id_usuario`, `id_producto`, `cantidad`) VALUES
-(7, 21, 6),
+(7, 15, 0),
+(7, 21, 0),
 (8, 13, 1),
-(8, 21, 3);
+(8, 20, 1),
+(8, 21, 1),
+(9, 21, 11);
 
 -- --------------------------------------------------------
 
@@ -157,7 +167,8 @@ CREATE TABLE `mensajes_chat` (
 
 INSERT INTO `mensajes_chat` (`id`, `id_usuario`, `mensaje`, `fecha`) VALUES
 (1, 8, 'hola', '2026-05-20 23:12:57'),
-(2, 7, 'eyyy', '2026-05-20 23:13:12');
+(2, 7, 'eyyy', '2026-05-20 23:13:12'),
+(3, 9, 'Probando chat', '2026-05-21 16:30:45');
 
 -- --------------------------------------------------------
 
@@ -390,7 +401,12 @@ INSERT INTO `pedidos_tienda` (`id`, `id_usuario`, `total`, `estado`) VALUES
 (6, 7, 3.00, 'completado'),
 (7, 7, 3.00, 'completado'),
 (8, 7, 3.00, 'completado'),
-(9, 8, 12.00, 'completado');
+(9, 8, 12.00, 'completado'),
+(10, 9, 3.00, 'completado'),
+(11, 9, 3.00, 'completado'),
+(12, 9, 3.00, 'completado'),
+(13, 7, 800.00, 'completado'),
+(14, 7, 6.00, 'completado');
 
 -- --------------------------------------------------------
 
@@ -3647,7 +3663,17 @@ INSERT INTO `pokemon_usuarios` (`id`, `id_usuario`, `id_pokemon`, `apodo`, `nive
 (32, 8, 63, NULL, 1, 0, 25, 20, 15, 105, 55, 90, 0),
 (33, 8, 19, NULL, 1, 0, 30, 56, 35, 25, 35, 72, 0),
 (34, 8, 77, NULL, 1, 0, 50, 85, 55, 65, 65, 90, 0),
-(35, 8, 96, NULL, 1, 0, 60, 48, 45, 43, 90, 42, 0);
+(35, 8, 96, NULL, 1, 0, 60, 48, 45, 43, 90, 42, 0),
+(36, 9, 19, NULL, 1, 0, 30, 56, 35, 25, 35, 72, 0),
+(37, 9, 5, NULL, 1, 0, 58, 64, 58, 80, 65, 80, 0),
+(38, 7, 12, NULL, 1, 0, 60, 45, 50, 90, 80, 70, 0),
+(39, 7, 103, NULL, 1, 0, 95, 95, 85, 125, 75, 55, 0),
+(40, 7, 41, NULL, 1, 0, 40, 45, 35, 30, 40, 55, 1),
+(41, 7, 1, NULL, 1, 0, 45, 49, 49, 65, 65, 45, 0),
+(42, 7, 86, NULL, 1, 0, 65, 45, 55, 45, 70, 45, 0),
+(43, 7, 52, NULL, 1, 0, 40, 45, 35, 40, 40, 90, 0),
+(44, 8, 111, NULL, 1, 0, 80, 85, 95, 30, 30, 25, 0),
+(45, 8, 135, NULL, 1, 0, 65, 65, 60, 110, 95, 130, 0);
 
 -- --------------------------------------------------------
 
@@ -3701,8 +3727,9 @@ CREATE TABLE `usuarios` (
 --
 
 INSERT INTO `usuarios` (`id`, `nombre`, `email`, `clave`, `avatar`, `admin`, `dinero`, `estado`, `verificado`) VALUES
-(7, 'chang', 'changc.ye1605@gmail.com', '$argon2id$v=19$m=65536,t=3,p=4$SHTQAAye3nPNkMhMRBgLkA$K8gfMIL8z/YYhL064QmDgm4EkYsoM8OzgzLVWxQ95EI', NULL, 0, 38.70, 'activo', 0),
-(8, 'admin', 'admin@gmail.com', '$argon2id$v=19$m=65536,t=3,p=4$h0XNEdb5+otHcbUM5BYtLQ$9fVABMm4tNCqNKQYgLnyzHDdOybmGTBH063fytsXxpk', NULL, 1, 2.80, 'activo', 1);
+(7, 'chang', 'changc.ye1605@gmail.com', '$argon2id$v=19$m=65536,t=3,p=4$h1pMi7EhgEKxMWqZeQnKrg$NgxyMToUsWtM1f2czo2hFqoUocWbU9aunph6JuEpU7k', NULL, 0, 0.20, 'activo', 1),
+(8, 'admin', 'admin@gmail.com', '$argon2id$v=19$m=65536,t=3,p=4$h0XNEdb5+otHcbUM5BYtLQ$9fVABMm4tNCqNKQYgLnyzHDdOybmGTBH063fytsXxpk', NULL, 1, 1202.80, 'activo', 1),
+(9, 'user', 'user@gmail.com', '$argon2id$v=19$m=65536,t=3,p=4$PILgLdhbjDofqgHGWUYZGA$9oCRlI5wCGPnYDAkwPEH1g4ZbuQ9nsOdEMrIV5c3Lq0', NULL, 0, 8.70, 'baneado', 0);
 
 --
 -- Índices para tablas volcadas
@@ -3826,13 +3853,13 @@ ALTER TABLE `categoria`
 -- AUTO_INCREMENT de la tabla `equipos`
 --
 ALTER TABLE `equipos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de la tabla `mensajes_chat`
 --
 ALTER TABLE `mensajes_chat`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de la tabla `movimientos`
@@ -3844,7 +3871,7 @@ ALTER TABLE `movimientos`
 -- AUTO_INCREMENT de la tabla `pedidos_tienda`
 --
 ALTER TABLE `pedidos_tienda`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT de la tabla `pokemon`
@@ -3856,7 +3883,7 @@ ALTER TABLE `pokemon`
 -- AUTO_INCREMENT de la tabla `pokemon_usuarios`
 --
 ALTER TABLE `pokemon_usuarios`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=46;
 
 --
 -- AUTO_INCREMENT de la tabla `productos`
@@ -3868,7 +3895,7 @@ ALTER TABLE `productos`
 -- AUTO_INCREMENT de la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- Restricciones para tablas volcadas
